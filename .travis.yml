@@ -1,137 +1,37 @@
 dist: xenial
 language: python
 python: "2.7"
-services:
-  - postgresql
 
 stages:
-  - lint
   - test
-  - name: deploy
-    if: tag IS present
-
-env:
-  - TOX_ENV=py35 GALAXY_VERSION=dev
-  - TOX_ENV=py35 GALAXY_VERSION=release_20.01
-  - TOX_ENV=py35 GALAXY_VERSION=release_19.09
-  - TOX_ENV=py35 GALAXY_VERSION=release_19.05
-  - TOX_ENV=py35 GALAXY_VERSION=release_19.01
-  - TOX_ENV=py35 GALAXY_VERSION=release_18.09
-  - TOX_ENV=py35 GALAXY_VERSION=release_18.05
-  - TOX_ENV=py35 GALAXY_VERSION=release_18.01
-  - TOX_ENV=py35 GALAXY_VERSION=release_17.09
-  - TOX_ENV=py35 GALAXY_VERSION=release_17.05
-  - TOX_ENV=py35 GALAXY_VERSION=release_17.01
-  - TOX_ENV=py35 GALAXY_VERSION=release_16.10
-  - TOX_ENV=py35 GALAXY_VERSION=release_16.07
-  - TOX_ENV=py35 GALAXY_VERSION=release_16.04
-  - TOX_ENV=py35 GALAXY_VERSION=release_16.01
-  - TOX_ENV=py35 GALAXY_VERSION=release_15.10
-  - TOX_ENV=py35 GALAXY_VERSION=release_15.07
-  - TOX_ENV=py35 GALAXY_VERSION=release_15.05
-  - TOX_ENV=py35 GALAXY_VERSION=release_15.03
 
 matrix:
-  include:
-    - stage: lint
-      python: '3.5'
-      before_install: {}
-      before_script: {}
-      script: tox -e flake8
-
     - stage: test
-      env: TOX_ENV=py38 GALAXY_VERSION=dev
-      addons:
-        apt:
-          sources:
-            - deadsnakes
-          packages:
-            - python3.8-dev
-            - python3.8-distutils
-    - stage: test
-      env: TOX_ENV=py37 GALAXY_VERSION=dev
       addons:
         apt:
           sources:
             - deadsnakes
           packages:
             - python3.7-dev
-    - stage: test
-      env: TOX_ENV=py36 GALAXY_VERSION=dev
-      addons:
-        apt:
-          sources:
-            - deadsnakes
-          packages:
-            - python3.6-dev
+      before_install:
+        - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+
     - stage: test
       os: osx
       # No version of Python is available via language: on OS X workers, see https://github.com/travis-ci/travis-ci/issues/2312
       language: generic
-      env: TOX_ENV=py37 GALAXY_VERSION=dev
       before_install:
-        # PostgreSQL on OSX is not started, see https://github.com/travis-ci/travis-ci/issues/1875
-        - rm -rf /usr/local/var/postgres
-        - initdb /usr/local/var/postgres
-        - pg_ctl -D /usr/local/var/postgres start
-        - createuser -s postgres
-        # virtualenv has not been installed on OS X workers any more since xcode9.4 became the default image, see https://github.com/travis-ci/travis-ci/issues/9966
-        - python3 -m pip install --upgrade virtualenv
-        - virtualenv -p python3 .venv
-        - . .venv/bin/activate
-
-    - stage: deploy
-      python: '3.6'
-      env:
-        - TWINE_USERNAME=__token__
-        # TWINE_PASSWORD environment variable is saved in Travis CI Settings
-      before_install: {}
-      install:
-        - python3 -m pip install --upgrade pip setuptools
-        - python3 -m pip install --upgrade twine wheel
-      before_script: {}
-      script:
-        - python3 setup.py sdist bdist_wheel
-        - twine check dist/*
-        - twine upload --skip-existing dist/*
-
-before_install:
-  # Workaround for https://github.com/travis-ci/travis-ci/issues/7940
-  - sudo rm -f /etc/boto.cfg
+        - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O ~/miniconda.sh
 
 install:
-  # Here Python is v 2.7 for lint and 3 for test stage
   - python -m pip install "tox>=1.8.0"
-
-before_script:
-  # Create a PostgreSQL database for Galaxy. The default SQLite3 database makes test fail randomly because of "database locked" error.
-  - createdb -U postgres galaxy-travis
-  # Install Galaxy
-  - cd $HOME
-  - wget https://github.com/galaxyproject/galaxy/archive/${GALAXY_VERSION}.tar.gz
-  - tar xvzf ${GALAXY_VERSION}.tar.gz | tail
-  - cd galaxy-${GALAXY_VERSION}
-  - GALAXY_DIR=$PWD
-  # Export GALAXY_CONFIG_FILE environment variable to be used by run_galaxy.sh
-  - export GALAXY_CONFIG_FILE=config/galaxy.ini
-  # Export BIOBLEND_ environment variables to be used in BioBlend tests
-  - export BIOBLEND_GALAXY_MASTER_API_KEY=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 32)
-  - export BIOBLEND_GALAXY_USER_EMAIL=${USER}@localhost.localdomain
-  - DATABASE_CONNECTION=postgresql://postgres:@localhost/galaxy-travis
-  - eval "echo \"$(cat "${TRAVIS_BUILD_DIR}/tests/template_galaxy.ini")\"" > "$GALAXY_CONFIG_FILE"
-  # Update kombu requirement (and its dependency amqp) to a version compatible with Python 2.7.11, see https://github.com/celery/kombu/pull/540
-  - |
-    if [ -f eggs.ini ]; then
-      sed -i.bak -e 's/^kombu = .*$/kombu = 3.0.30/' -e 's/^amqp = .*$/amqp = 1.4.8/' eggs.ini;
-    fi
-  # Start Galaxy and wait for successful server start
-  - export GALAXY_SKIP_CLIENT_BUILD=1
+  - virtualenv -p python3 .venv
+  - . .venv/bin/activate
+  - bash ~/miniconda.sh -b
 
 script:
-  - GALAXY_RUN_ALL=1 "${TRAVIS_BUILD_DIR}/run_galaxy.sh" --daemon --wait
-  - export BIOBLEND_GALAXY_URL=http://localhost:8080
-  - cd "${TRAVIS_BUILD_DIR}"
-  - tox -e $TOX_ENV
-
-after_failure:
-  - cat ${GALAXY_DIR}/main.log
+  - cat ~/miniconda3/bin/conda
+  - env
+  - ~/miniconda3/bin/conda --version
+  - ~/miniconda3/bin/python -c 'import sys; print(sys.path); print(sys.prefix)'
+  - python -c "import subprocess; subprocess.check_call(['$HOME/miniconda3/bin/conda', '--version'])"
