@@ -35,3 +35,5 @@ script:
   - ~/miniconda3/bin/conda --version
   - ~/miniconda3/bin/python -c 'import sys; print(sys.path); print(sys.prefix)'
   - python -c "import subprocess; subprocess.check_call(['$HOME/miniconda3/bin/conda', '--version'])"
+  - deactivate
+  - python -c "import subprocess; subprocess.check_call(['$HOME/miniconda3/bin/conda', '--version'])"
