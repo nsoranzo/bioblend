@@ -20,8 +20,7 @@ matrix:
 install:
   - bash ~/miniconda.sh -b
   - python3 -m pip list
-  - python3 -m pip install --upgrade virtualenv
-  - virtualenv -vvv --with-traceback -p python3 .venv
+  - python3 -m venv .venv
   - . .venv/bin/activate
 
 script:
