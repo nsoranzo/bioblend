@@ -1,18 +1,12 @@
 dist: xenial
 language: python
-python: "2.7"
+python: "3.7"
 
 stages:
   - test
 
 matrix:
     - stage: test
-      addons:
-        apt:
-          sources:
-            - deadsnakes
-          packages:
-            - python3.7-dev
       before_install:
         - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
 
@@ -24,10 +18,11 @@ matrix:
         - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O ~/miniconda.sh
 
 install:
-  - python -m pip install "tox>=1.8.0"
-  - virtualenv -p python3 .venv
-  - . .venv/bin/activate
   - bash ~/miniconda.sh -b
+  - python3 -m pip list
+  - python3 -m pip install --upgrade virtualenv
+  - virtualenv -vvv --with-traceback -p python3 .venv
+  - . .venv/bin/activate
 
 script:
   - cat ~/miniconda3/bin/conda
