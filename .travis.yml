@@ -21,7 +21,7 @@ matrix:
 install:
   - bash ~/miniconda.sh -b
   - python3 -m pip list
-  - python3 -m pip install --upgrade virtualenv
+  - python3 -m pip install --upgrade git+https://github.com/pypa/virtualenv.git@refs/pull/1749/merge
   - virtualenv -vvv --with-traceback -p python3 .venv
   - . .venv/bin/activate
 
