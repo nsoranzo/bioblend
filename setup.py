@@ -7,7 +7,7 @@ from setuptools import find_packages, setup
 # It should be possible to use "from bioblend import get_version", but this may
 # try to import some not-yet-installed libraries.
 reg = re.compile(r'__version__\s*=\s*(.+)')
-with open(os.path.join('bioblend', '__init__.py')) as :
+with open(os.path.join('bioblend', '__init__.py')) as f:
     for line in f:
         m = reg.match(line)
         if m:
@@ -15,6 +15,9 @@ with open(os.path.join('bioblend', '__init__.py')) as :
             break
 with open('README.rst') as f:
     long_description = f.read()
+
+    
+    
 
 setup(
     name="bioblend",
