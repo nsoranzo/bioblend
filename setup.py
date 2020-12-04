@@ -1,13 +1,13 @@
 import ast
-import os.path
 import re
+import os.path
 
 from setuptools import find_packages, setup
 
 # It should be possible to use "from bioblend import get_version", but this may
 # try to import some not-yet-installed libraries.
 reg = re.compile(r'__version__\s*=\s*(.+)')
-with open(os.path.join('bioblend', '__init__.py')) as f:
+with open(os.path.join('bioblend', '__init__.py')) as :
     for line in f:
         m = reg.match(line)
         if m:
